@@ -4,7 +4,10 @@ import {
     loginController,
     logoutController,
     verifyOtpController,
-    resendOtpController
+    resendOtpController,
+    forgotPasswordController,
+    verifyResetOtpController,
+    resetPasswordController
 } from "../controllers/auth.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { roleMiddleware } from "../middlewares/role.middleware";
@@ -15,7 +18,9 @@ router.post("/login", loginController);
 router.post("/logout", logoutController);
 router.post("/verify-otp", verifyOtpController);
 router.post("/resend-otp", resendOtpController);
-
+router.post("/forgot-password", forgotPasswordController);
+router.post("/verify-reset-otp", verifyResetOtpController);
+router.post("/reset-password", resetPasswordController)
 router.get("/me", authMiddleware, (req, res) => {
     return res.json({
         message: "Authenticated",

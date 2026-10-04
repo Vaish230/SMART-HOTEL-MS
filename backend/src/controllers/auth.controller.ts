@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { signupSchema, loginSchema, verifyOtpSchema, resendOtpSchema } from "../schemas/auth.schema";
+import { signupSchema, loginSchema, verifyOtpSchema, resendOtpSchema, forgotPasswordSchema, verifyResetOtpSchema, resetPasswordSchema } from "../schemas/auth.schema";
 import * as authService from "../services/auth.services";
 
 export const signupController = async (
@@ -51,8 +51,8 @@ export const loginController = async (
     req: Request,
     res: Response
 ) => {
-    otpLastSentAt: new Date(),
-        console.log("LOGIN BODY:", req.body);
+    console.log("LOGIN BODY:", req.body);
+
     try {
         const result = loginSchema.safeParse(req.body);
 
@@ -70,17 +70,8 @@ export const loginController = async (
             password
         );
 
-        res.cookie("token", resultData.token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 15 * 60 * 1000,
-        });
+        return res.status(200).json(resultData);
 
-        return res.status(200).json({
-            message: "User logged in successfully",
-            user: resultData.user,
-        });
     } catch (error) {
         console.error("Login error:", error);
 
@@ -204,6 +195,172 @@ export const resendOtpController = async (
             return res.status(404).json({
                 message: "User not found",
             });
+        }
+
+        return res.status(500).json({
+            message: "Internal Server Error",
+        });
+    }
+};
+
+export const forgotPasswordController = async (
+    req: Request,
+    res: Response
+) => {
+
+    try {
+        const result = forgotPasswordSchema.safeParse(req.body);
+
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Validation failed",
+                errors: result.error.flatten(),
+            });
+        }
+
+        const { email } = result.data;
+
+        const resultData = await authService.forgotPassword(email);
+
+        return res.status(200).json(resultData);
+
+    }
+    catch (error) {
+        console.error("Forgot password error:", error);
+
+        if (
+            error instanceof Error &&
+            error.message === "User not found"
+        ) {
+            return res.status(404).json({
+                message: "User not found",
+            });
+        }
+
+        return res.status(500).json({
+            message: "Internal Server Error",
+        });
+    }
+
+}
+
+export const verifyResetOtpController = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const result = verifyResetOtpSchema.safeParse(req.body);
+
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Validation Failed",
+                errors: result.error.flatten()
+            })
+        }
+
+        const { email, otp } = result.data;
+
+        const data = await authService.verifyResetOtp(email, otp);
+
+        return res.status(200).json({
+            message: "OTP verified successfully",
+            data,
+        })
+    }
+
+    catch (error) {
+        console.error("Verify reset OTP error:", error);
+
+        if (error instanceof Error) {
+            if (error.message === "User not found") {
+                return res.status(404).json({
+                    message: "User not found",
+                });
+            }
+
+            if (error.message === "OTP not found or expired") {
+                return res.status(400).json({
+                    message: "OTP not found or expired",
+                });
+            }
+
+            if (error.message === "OTP expired") {
+                return res.status(400).json({
+                    message: "OTP expired",
+                });
+            }
+
+            if (error.message === "Too Many Attempts") {
+                return res.status(429).json({
+                    message: "Too Many Attempts",
+                });
+            }
+
+            if (error.message === "Invalid OTP") {
+                return res.status(400).json({
+                    message: "Invalid OTP",
+                });
+            }
+        }
+
+        return res.status(500).json({
+            message: "Internal Server Error",
+        });
+    }
+}
+
+
+export const resetPasswordController = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const result = resetPasswordSchema.safeParse(req.body);
+
+        if (!result.success) {
+            return res.status(400).json({
+                message: "Validation Failed",
+                errors: result.error.flatten(),
+            });
+        }
+
+        const { email, newPassword } = result.data;
+
+        const data = await authService.resetPassword(
+            email,
+            newPassword
+        );
+
+        return res.status(200).json(data);
+
+    } catch (error) {
+        console.error("Reset password error:", error);
+
+        if (error instanceof Error) {
+
+            if (error.message === "User not found") {
+                return res.status(404).json({
+                    message: "User not found",
+                });
+            }
+
+            if (error.message === "OTP verification required") {
+                return res.status(403).json({
+                    message: "OTP verification required",
+                });
+            }
+
+            if (error.message === "OTP not found or expired") {
+                return res.status(400).json({
+                    message: "OTP not found or expired",
+                });
+            }
+
+            if (error.message === "OTP expired") {
+                return res.status(400).json({
+                    message: "OTP expired",
+                });
+            }
         }
 
         return res.status(500).json({

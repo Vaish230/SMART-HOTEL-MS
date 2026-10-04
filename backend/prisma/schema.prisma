@@ -8,20 +8,25 @@ datasource db {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  name          String
-  email         String    @unique
-  passwordHash  String
-  phone         String
-  verified      Boolean   @default(false)
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now())
-  otpHash       String?
-  otpExpiresAt  DateTime?
-  otpAttempts   Int       @default(0)
-  hotelId       String?
-  hotel         Hotel?    @relation(fields: [hotelId], references: [id])
-  otpLastSentAt DateTime?
+  id                 Int       @id @default(autoincrement())
+  name               String
+  email              String    @unique
+  passwordHash       String
+  phone              String
+  verified           Boolean   @default(false)
+  role               Role      @default(USER)
+  createdAt          DateTime  @default(now())
+  otpHash            String?
+  otpExpiresAt       DateTime?
+  otpAttempts        Int       @default(0)
+  hotelId            String?
+  hotel              Hotel?    @relation(fields: [hotelId], references: [id])
+  otpLastSentAt      DateTime?
+  resetOtpHash       String?
+  resetOtpExpiresAt  DateTime?
+  resetOtpAttempts   Int       @default(0)
+  resetOtpLastSentAt DateTime?
+  resetOtpVerified   Boolean   @default(false)
 }
 
 enum Role {
