@@ -36,6 +36,7 @@ enum Role {
   MANAGER
   CHEF
   WAITER
+  OWNER
 }
 
 model Hotel {
